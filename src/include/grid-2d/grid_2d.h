@@ -66,5 +66,6 @@ void grid2dQueryIntersects(const Grid2d *self, bl_recti *query,
                            Grid2dNodeResult *results);
 
 void grid2dAdd(Grid2d *self, const bl_recti *rect, void *userData);
+void grid2dDebugOutput(const Grid2d* self);
 
 #endif

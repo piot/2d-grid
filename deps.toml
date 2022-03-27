@@ -1,6 +1,6 @@
 depsversion = "0.0.0"
 
-name = "piot/aabb-tree"
+name = "piot/grid-2d"
 version = "0.0.0"
 
 [[dependencies]]
