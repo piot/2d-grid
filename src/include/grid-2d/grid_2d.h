@@ -10,15 +10,9 @@
 
 struct ImprintMemory;
 
-typedef struct Grid2dNode
-{
-    bl_recti rect;
-    void *userData;
-} Grid2dNode;
-
 typedef struct Grid2dSlotEntry
 {
-    const Grid2dNode *node;
+    void *userData;
     struct Grid2dSlotEntry *nextEntry;
 } Grid2dSlotEntry;
 
@@ -29,10 +23,6 @@ typedef struct Grid2dSlot
 
 typedef struct Grid2d
 {
-    Grid2dNode *preAllocatedNodes;
-    size_t preAllocatedNodeIndex;
-    size_t preAllocatedNodeCapacity;
-
     Grid2dSlotEntry *preAllocatedSlotEntries;
     size_t preAllocatedSlotEntryIndex;
     size_t preAllocatedSlotEntryCapacity;
@@ -46,9 +36,7 @@ typedef struct Grid2d
 
 typedef struct Grid2dNodeResultEntry
 {
-    const Grid2dNode *node;
     void *userData;
-    bl_recti rect;
 } Grid2dNodeResultEntry;
 
 typedef struct Grid2dNodeResult

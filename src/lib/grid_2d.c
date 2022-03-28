@@ -7,11 +7,10 @@
 #include <clog/clog.h>
 #include <imprint/memory.h>
 
-#if _MSC_VER
-#define GRID_2D_FORCE_INLINE __forceinline
-#else
-#define GRID_2D_FORCE_INLINE __attribute__((__always_inline__))
-#endif
+#include <tiny-libc/tiny_libc.h>
+
+#define GRID_2D_FORCE_INLINE TC_FORCE_INLINE
+
 
 void grid2dInit(Grid2d *self, ImprintMemory *memory, bl_vector2i origo, bl_size2i gridSize, size_t factor)
 {
@@ -19,11 +18,6 @@ void grid2dInit(Grid2d *self, ImprintMemory *memory, bl_vector2i origo, bl_size2
     self->origo = origo;
     self->gridFactor = factor;
     self->gridSize = gridSize;
-
-    self->preAllocatedNodeIndex = 0;
-    self->preAllocatedNodeCapacity = 32 * 1024;
-    self->preAllocatedNodes = IMPRINT_MEMORY_ALLOC_TYPE_COUNT(
-        memory, Grid2dNode, self->preAllocatedNodeCapacity);
 
     self->preAllocatedSlotEntryIndex = 0;
     self->preAllocatedSlotEntryCapacity = 64 * 1024;
@@ -37,14 +31,12 @@ void grid2dInit(Grid2d *self, ImprintMemory *memory, bl_vector2i origo, bl_size2
 
 void grid2dClear(Grid2d *self)
 {
-    self->preAllocatedNodeIndex = 0;
     self->preAllocatedSlotEntryIndex = 0;
     tc_mem_clear_type_array(self->grid, self->gridSlotCount);
 }
 
 void grid2dDestroy(Grid2d *self)
 {
-    imprintMemoryFree(self->memory, self->preAllocatedNodes);
     imprintMemoryFree(self->memory, self->preAllocatedSlotEntries);
     imprintMemoryFree(self->memory, self->grid);
 }
@@ -66,29 +58,8 @@ static inline const Grid2dSlot *getConstSlotFromIndex(const Grid2d *self, size_t
 
 void grid2dDebugOutput(const Grid2d* self)
 {
-  CLOG_OUTPUT_STDERR("grid2d slotCount: %zu slotEntries: %zu nodes: %zu", self->gridSlotCount, self->preAllocatedSlotEntryIndex, self->preAllocatedNodeIndex)
+  CLOG_OUTPUT_STDERR("grid2d slotCount: %zu slotEntries: %zu", self->gridSlotCount, self->preAllocatedSlotEntryIndex)
 }
-
-/*
-static inline Grid2dSlot *getSlot(Grid2d *self, bl_vector2i pos)
-{
-    if (pos.x < 0 || pos.y < 0 || pos.x >= self->gridSize.width || pos.y >= self->gridSize.height)
-    {
-        CLOG_ERROR("Illegal position");
-    }
-
-    size_t offset = pos.y * self->gridSize.width + pos.x;
-
-    return getSlotFromIndex(self, offset);
-}
-
-
-static inline void worldPositionToGridPosition(const Grid2d *self, bl_vector2i *result, const bl_vector2i *a)
-{
-    result->x = (a->x - self->origo.x) / self->gridFactor;
-    result->y = (a->y - self->origo.y) / self->gridFactor;
-}
-*/
 
 static inline GRID_2D_FORCE_INLINE size_t worldPositionToGridIndex(const Grid2d *self, const bl_vector2i *a)
 {
@@ -134,20 +105,6 @@ static inline GRID_2D_FORCE_INLINE size_t worldRectToGridIndexes(const Grid2d *s
     return 4;
 }
 
-static inline GRID_2D_FORCE_INLINE Grid2dNode *grid2dAllocateNode(Grid2d *self, const bl_recti* rect, void *userData)
-{
-    if (self->preAllocatedNodeIndex >= self->preAllocatedNodeCapacity)
-    {
-        CLOG_ERROR("Out of node spaces for node. Allocated %zu of %zu",
-                   self->preAllocatedNodeIndex, self->preAllocatedNodeCapacity)
-    }
-    Grid2dNode *node = &self->preAllocatedNodes[self->preAllocatedNodeIndex];
-    node->userData = userData;
-    node->rect = *rect;
-    self->preAllocatedNodeIndex++;
-    return node;
-}
-
 static void grid2dNodeResultInit(Grid2dNodeResult *self)
 {
     self->capacity = 32;
@@ -155,7 +112,7 @@ static void grid2dNodeResultInit(Grid2dNodeResult *self)
     self->debugDepth = 0;
 }
 
-static void addResult(Grid2dNodeResult *self, const Grid2dNode *node)
+static void addResult(Grid2dNodeResult *self, void *userData)
 {
     if (self->count == self->capacity)
     {
@@ -166,16 +123,14 @@ static void addResult(Grid2dNodeResult *self, const Grid2dNode *node)
     for (size_t i = 0; i < self->count; ++i)
     {
         Grid2dNodeResultEntry *previousAddedEntry = &self->entries[i];
-        if (previousAddedEntry->node == node)
+        if (previousAddedEntry->userData == userData)
         {
             return;
         }
     }
 
     Grid2dNodeResultEntry *entry = &self->entries[self->count++];
-    entry->node = node;
-    entry->userData = node->userData;
-    entry->rect = node->rect;
+    entry->userData = userData;
 }
 
 static inline GRID_2D_FORCE_INLINE void
@@ -185,11 +140,7 @@ findOverlaps(const Grid2dSlot *slot, bl_recti *query,
     Grid2dSlotEntry *entry = slot->firstEntry;
     while (entry)
     {
-        bool intersects = bl_recti_is_intersect(&entry->node->rect, query);
-        if (intersects)
-        {
-          addResult(results, entry->node);
-        }
+        addResult(results, entry->userData);
 
         entry = entry->nextEntry;
     }
@@ -210,7 +161,7 @@ void grid2dQueryIntersects(const Grid2d *self, bl_recti *query,
     }
 }
 
-static inline GRID_2D_FORCE_INLINE Grid2dSlotEntry *grid2dAllocateSlotEntry(Grid2d *self, Grid2dNode *node)
+static inline GRID_2D_FORCE_INLINE Grid2dSlotEntry *grid2dAllocateSlotEntry(Grid2d *self, void* userData)
 {
     if (self->preAllocatedSlotEntryIndex >= self->preAllocatedSlotEntryCapacity)
     {
@@ -218,7 +169,7 @@ static inline GRID_2D_FORCE_INLINE Grid2dSlotEntry *grid2dAllocateSlotEntry(Grid
                    self->preAllocatedSlotEntryIndex, self->preAllocatedSlotEntryCapacity)
     }
     Grid2dSlotEntry *slotEntry = &self->preAllocatedSlotEntries[self->preAllocatedSlotEntryIndex];
-    slotEntry->node = node;
+    slotEntry->userData = userData;
     slotEntry->nextEntry = 0;
     self->preAllocatedSlotEntryIndex++;
     return slotEntry;
@@ -229,14 +180,12 @@ void grid2dAdd(Grid2d *self, const bl_recti *rect, void *userData)
     size_t indexes[4];
     size_t foundIndexes = worldRectToGridIndexes(self, rect, indexes, 4);
 
-    Grid2dNode *newNode = grid2dAllocateNode(self, rect, userData);
-
     for (size_t i = 0; i < foundIndexes; ++i)
     {
         Grid2dSlot *slot = getSlotFromIndex(self, indexes[i]);
 
         Grid2dSlotEntry *entry = slot->firstEntry;
-        Grid2dSlotEntry *newEntry = grid2dAllocateSlotEntry(self, newNode);
+        Grid2dSlotEntry *newEntry = grid2dAllocateSlotEntry(self, userData);
 
         if (!entry)
         {
