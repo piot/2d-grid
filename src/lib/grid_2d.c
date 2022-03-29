@@ -11,7 +11,6 @@
 
 #define GRID_2D_FORCE_INLINE TC_FORCE_INLINE
 
-
 void grid2dInit(Grid2d *self, ImprintMemory *memory, bl_vector2i origo, bl_size2i gridSize, size_t factor)
 {
     self->memory = memory;
@@ -56,9 +55,9 @@ static inline const Grid2dSlot *getConstSlotFromIndex(const Grid2d *self, size_t
     return (const Grid2dSlot *)getSlotFromIndex((Grid2d *)self, offset);
 }
 
-void grid2dDebugOutput(const Grid2d* self)
+void grid2dDebugOutput(const Grid2d *self)
 {
-  CLOG_OUTPUT_STDERR("grid2d slotCount: %zu slotEntries: %zu", self->gridSlotCount, self->preAllocatedSlotEntryIndex)
+    CLOG_OUTPUT_STDERR("grid2d slotCount: %zu slotEntries: %zu", self->gridSlotCount, self->preAllocatedSlotEntryIndex)
 }
 
 static inline GRID_2D_FORCE_INLINE size_t worldPositionToGridIndex(const Grid2d *self, const bl_vector2i *a)
@@ -134,7 +133,7 @@ static void addResult(Grid2dNodeResult *self, void *userData)
 }
 
 static inline GRID_2D_FORCE_INLINE void
-findOverlaps(const Grid2dSlot *slot, bl_recti *query,
+findOverlaps(const Grid2dSlot *slot,
              Grid2dNodeResult *results)
 {
     Grid2dSlotEntry *entry = slot->firstEntry;
@@ -157,11 +156,11 @@ void grid2dQueryIntersects(const Grid2d *self, bl_recti *query,
     for (size_t i = 0; i < foundIndexes; ++i)
     {
         const Grid2dSlot *slot = getConstSlotFromIndex(self, indexes[i]);
-        findOverlaps(slot, query, results);
+        findOverlaps(slot, results);
     }
 }
 
-static inline GRID_2D_FORCE_INLINE Grid2dSlotEntry *grid2dAllocateSlotEntry(Grid2d *self, void* userData)
+static inline GRID_2D_FORCE_INLINE Grid2dSlotEntry *grid2dAllocateSlotEntry(Grid2d *self, void *userData)
 {
     if (self->preAllocatedSlotEntryIndex >= self->preAllocatedSlotEntryCapacity)
     {
