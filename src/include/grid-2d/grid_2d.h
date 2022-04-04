@@ -19,6 +19,7 @@ typedef struct Grid2dSlotEntry
 typedef struct Grid2dSlot
 {
     Grid2dSlotEntry *firstEntry;
+    size_t depth;
 } Grid2dSlot;
 
 typedef struct Grid2d
@@ -32,6 +33,7 @@ typedef struct Grid2d
     size_t gridSlotCount;
     size_t gridFactor;
     bl_vector2i origo;
+    size_t maxDepth;
 } Grid2d;
 
 typedef struct Grid2dNodeResultEntry
@@ -41,7 +43,7 @@ typedef struct Grid2dNodeResultEntry
 
 typedef struct Grid2dNodeResult
 {
-    Grid2dNodeResultEntry entries[32];
+    Grid2dNodeResultEntry entries[64];
     size_t count;
     size_t capacity;
     size_t debugDepth;

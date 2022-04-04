@@ -20,18 +20,19 @@ void grid2dInit(Grid2d *self, ImprintMemory *memory, bl_vector2i origo, bl_size2
 
     self->preAllocatedSlotEntryIndex = 0;
     self->preAllocatedSlotEntryCapacity = 64 * 1024;
-    self->preAllocatedSlotEntries = IMPRINT_MEMORY_ALLOC_TYPE_COUNT(
+    self->preAllocatedSlotEntries = IMPRINT_MEMORY_CALLOC_TYPE_COUNT(
         memory, Grid2dSlotEntry, self->preAllocatedSlotEntryCapacity);
 
     self->gridSlotCount = gridSize.width * gridSize.height;
     self->grid = IMPRINT_MEMORY_CALLOC_TYPE_COUNT(
         memory, Grid2dSlot, self->gridSlotCount);
+    self->maxDepth = 0;
 }
 
 void grid2dClear(Grid2d *self)
 {
     self->preAllocatedSlotEntryIndex = 0;
-    tc_mem_clear_type_array(self->grid, self->gridSlotCount);
+    tc_mem_clear(self->grid, self->gridSlotCount * sizeof(Grid2dSlot));
 }
 
 void grid2dDestroy(Grid2d *self)
@@ -44,7 +45,7 @@ static inline GRID_2D_FORCE_INLINE Grid2dSlot *getSlotFromIndex(Grid2d *self, si
 {
     if (offset >= self->gridSlotCount)
     {
-        CLOG_ERROR("Illegal position")
+        CLOG_ERROR("Illegal position %zu", offset)
     }
 
     return &self->grid[offset];
@@ -106,7 +107,7 @@ static inline GRID_2D_FORCE_INLINE size_t worldRectToGridIndexes(const Grid2d *s
 
 static void grid2dNodeResultInit(Grid2dNodeResult *self)
 {
-    self->capacity = 32;
+    self->capacity = 64;
     self->count = 0;
     self->debugDepth = 0;
 }
@@ -121,8 +122,8 @@ static void addResult(Grid2dNodeResult *self, void *userData)
 
     for (size_t i = 0; i < self->count; ++i)
     {
-        Grid2dNodeResultEntry *previousAddedEntry = &self->entries[i];
-        if (previousAddedEntry->userData == userData)
+        const Grid2dNodeResultEntry *previousAddedEntry = &self->entries[i];
+        if ((uintptr_t)previousAddedEntry->userData == (uintptr_t)userData)
         {
             return;
         }
@@ -152,7 +153,6 @@ void grid2dQueryIntersects(const Grid2d *self, bl_recti *query,
     size_t foundIndexes = worldRectToGridIndexes(self, query, indexes, 4);
 
     grid2dNodeResultInit(results);
-
     for (size_t i = 0; i < foundIndexes; ++i)
     {
         const Grid2dSlot *slot = getConstSlotFromIndex(self, indexes[i]);
@@ -183,20 +183,13 @@ void grid2dAdd(Grid2d *self, const bl_recti *rect, void *userData)
     {
         Grid2dSlot *slot = getSlotFromIndex(self, indexes[i]);
 
-        Grid2dSlotEntry *entry = slot->firstEntry;
         Grid2dSlotEntry *newEntry = grid2dAllocateSlotEntry(self, userData);
+        newEntry->nextEntry = slot->firstEntry;
+        slot->firstEntry = newEntry;
 
-        if (!entry)
-        {
-            slot->firstEntry = newEntry;
-            continue;
+        slot->depth++;
+        if (slot->depth > self->maxDepth) {
+          self->maxDepth = slot->depth;
         }
-
-        while (entry->nextEntry)
-        {
-            entry = entry->nextEntry;
-        }
-
-        entry->nextEntry = newEntry;
     }
 }
