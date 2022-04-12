@@ -2,12 +2,11 @@
  *  Copyright (c) Peter Bjorklund. All rights reserved.
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-#include <grid-2d/grid_2d.h>
 #include <basal/basal_rect_utils.h>
 #include <clog/clog.h>
-#include <imprint/memory.h>
-
+#include <grid-2d/grid_2d.h>
 #include <imprint/allocator.h>
+#include <stdint.h>
 #include <tiny-libc/tiny_libc.h>
 
 #define GRID_2D_FORCE_INLINE TC_FORCE_INLINE
