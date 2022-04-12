@@ -7,24 +7,24 @@
 #include <clog/clog.h>
 #include <imprint/memory.h>
 
+#include <imprint/allocator.h>
 #include <tiny-libc/tiny_libc.h>
 
 #define GRID_2D_FORCE_INLINE TC_FORCE_INLINE
 
-void grid2dInit(Grid2d *self, ImprintMemory *memory, bl_vector2i origo, bl_size2i gridSize, size_t factor)
+void grid2dInit(Grid2d *self, struct ImprintAllocator *memory, bl_vector2i origo, bl_size2i gridSize, size_t factor)
 {
-    self->memory = memory;
     self->origo = origo;
     self->gridFactor = factor;
     self->gridSize = gridSize;
 
     self->preAllocatedSlotEntryIndex = 0;
     self->preAllocatedSlotEntryCapacity = 64 * 1024;
-    self->preAllocatedSlotEntries = IMPRINT_MEMORY_CALLOC_TYPE_COUNT(
+    self->preAllocatedSlotEntries = IMPRINT_CALLOC_TYPE_COUNT(
         memory, Grid2dSlotEntry, self->preAllocatedSlotEntryCapacity);
 
     self->gridSlotCount = gridSize.width * gridSize.height;
-    self->grid = IMPRINT_MEMORY_CALLOC_TYPE_COUNT(
+    self->grid = IMPRINT_CALLOC_TYPE_COUNT(
         memory, Grid2dSlot, self->gridSlotCount);
     self->maxDepth = 0;
 }
@@ -37,8 +37,8 @@ void grid2dClear(Grid2d *self)
 
 void grid2dDestroy(Grid2d *self)
 {
-    imprintMemoryFree(self->memory, self->preAllocatedSlotEntries);
-    imprintMemoryFree(self->memory, self->grid);
+    //imprintMemoryFree(self->memory, self->preAllocatedSlotEntries);
+    //imprintMemoryFree(self->memory, self->grid);
 }
 
 static inline GRID_2D_FORCE_INLINE Grid2dSlot *getSlotFromIndex(Grid2d *self, size_t offset)

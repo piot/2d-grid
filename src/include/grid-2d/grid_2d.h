@@ -8,7 +8,7 @@
 #include <basal/basal_rect2.h>
 #include <stddef.h>
 
-struct ImprintMemory;
+struct ImprintAllocator;
 
 typedef struct Grid2dSlotEntry
 {
@@ -27,7 +27,6 @@ typedef struct Grid2d
     Grid2dSlotEntry *preAllocatedSlotEntries;
     size_t preAllocatedSlotEntryIndex;
     size_t preAllocatedSlotEntryCapacity;
-    struct ImprintMemory *memory;
     Grid2dSlot *grid;
     bl_size2i gridSize;
     size_t gridSlotCount;
@@ -49,7 +48,7 @@ typedef struct Grid2dNodeResult
     size_t debugDepth;
 } Grid2dNodeResult;
 
-void grid2dInit(Grid2d *self, struct ImprintMemory *memory, bl_vector2i origo, bl_size2i gridSize, size_t factor);
+void grid2dInit(Grid2d *self, struct ImprintAllocator *memory, bl_vector2i origo, bl_size2i gridSize, size_t factor);
 void grid2dClear(Grid2d *self);
 void grid2dDestroy(Grid2d *self);
 void grid2dQueryIntersects(const Grid2d *self, bl_recti *query,
