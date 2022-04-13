@@ -44,7 +44,7 @@ static inline GRID_2D_FORCE_INLINE Grid2dSlot *getSlotFromIndex(Grid2d *self, si
 {
     if (offset >= self->gridSlotCount)
     {
-        CLOG_ERROR("Illegal position %zu", offset)
+        CLOG_ERROR("Grid2dSlot: Illegal position %zu", offset)
     }
 
     return &self->grid[offset];
