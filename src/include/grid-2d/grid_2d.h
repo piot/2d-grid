@@ -5,7 +5,7 @@
 #ifndef GRID_2D_H
 #define GRID_2D_H
 
-#include <basal/basal_rect2.h>
+#include <basal/rect2.h>
 #include <stddef.h>
 
 struct ImprintAllocator;
@@ -28,10 +28,10 @@ typedef struct Grid2d
     size_t preAllocatedSlotEntryIndex;
     size_t preAllocatedSlotEntryCapacity;
     Grid2dSlot *grid;
-    bl_size2i gridSize;
+    BlSize2i gridSize;
     size_t gridSlotCount;
     size_t gridFactor;
-    bl_vector2i origo;
+    BlVector2i origo;
     size_t maxDepth;
 } Grid2d;
 
@@ -48,13 +48,13 @@ typedef struct Grid2dNodeResult
     size_t debugDepth;
 } Grid2dNodeResult;
 
-void grid2dInit(Grid2d *self, struct ImprintAllocator *memory, bl_vector2i origo, bl_size2i gridSize, size_t factor);
+void grid2dInit(Grid2d *self, struct ImprintAllocator *memory, BlVector2i origo, BlSize2i gridSize, size_t factor);
 void grid2dClear(Grid2d *self);
 void grid2dDestroy(Grid2d *self);
-void grid2dQueryIntersects(const Grid2d *self, bl_recti *query,
+void grid2dQueryIntersects(const Grid2d *self, BlRecti *query,
                            Grid2dNodeResult *results);
 
-void grid2dAdd(Grid2d *self, const bl_recti *rect, void *userData);
+void grid2dAdd(Grid2d *self, const BlRecti *rect, void *userData);
 void grid2dDebugOutput(const Grid2d* self);
 
 #endif

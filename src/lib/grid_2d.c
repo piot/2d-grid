@@ -2,7 +2,7 @@
  *  Copyright (c) Peter Bjorklund. All rights reserved.
  *  Licensed under the MIT License. See LICENSE in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-#include <basal/basal_rect_utils.h>
+#include <basal/rect_utils.h>
 #include <clog/clog.h>
 #include <grid-2d/grid_2d.h>
 #include <imprint/allocator.h>
@@ -11,7 +11,7 @@
 
 #define GRID_2D_FORCE_INLINE TC_FORCE_INLINE
 
-void grid2dInit(Grid2d *self, struct ImprintAllocator *memory, bl_vector2i origo, bl_size2i gridSize, size_t factor)
+void grid2dInit(Grid2d *self, struct ImprintAllocator *memory, BlVector2i origo, BlSize2i gridSize, size_t factor)
 {
     self->origo = origo;
     self->gridFactor = factor;
@@ -60,7 +60,7 @@ void grid2dDebugOutput(const Grid2d *self)
     CLOG_OUTPUT_STDERR("grid2d slotCount: %zu slotEntries: %zu", self->gridSlotCount, self->preAllocatedSlotEntryIndex)
 }
 
-static inline GRID_2D_FORCE_INLINE size_t worldPositionToGridIndex(const Grid2d *self, const bl_vector2i *a)
+static inline GRID_2D_FORCE_INLINE size_t worldPositionToGridIndex(const Grid2d *self, const BlVector2i *a)
 {
     int x = (a->x - self->origo.x) / self->gridFactor;
     int y = (a->y - self->origo.y) / self->gridFactor;
@@ -79,7 +79,7 @@ static inline GRID_2D_FORCE_INLINE size_t worldPositionToGridIndex(const Grid2d 
     return y * self->gridSize.width + x;
 }
 
-static inline GRID_2D_FORCE_INLINE size_t worldRectToGridIndexes(const Grid2d *self, const bl_recti *worldRect, size_t *target, size_t maxCount)
+static inline GRID_2D_FORCE_INLINE size_t worldRectToGridIndexes(const Grid2d *self, const BlRecti *worldRect, size_t *target, size_t maxCount)
 {
     if (maxCount < 4)
     {
@@ -87,13 +87,13 @@ static inline GRID_2D_FORCE_INLINE size_t worldRectToGridIndexes(const Grid2d *s
     }
     size_t lowerLeftGridIndex = worldPositionToGridIndex(self, &worldRect->vector);
 
-    bl_vector2i lowerRight = {worldRect->vector.x + worldRect->size.width, worldRect->vector.y};
+    BlVector2i lowerRight = {worldRect->vector.x + worldRect->size.width, worldRect->vector.y};
     size_t lowerRightGridIndex = worldPositionToGridIndex(self, &lowerRight);
 
-    bl_vector2i upperRight = {worldRect->vector.x + worldRect->size.width, worldRect->vector.y + worldRect->size.height};
+    BlVector2i upperRight = {worldRect->vector.x + worldRect->size.width, worldRect->vector.y + worldRect->size.height};
     size_t upperRightGridIndex = worldPositionToGridIndex(self, &upperRight);
 
-    bl_vector2i upperLeft = {worldRect->vector.x, worldRect->vector.y + worldRect->size.height};
+    BlVector2i upperLeft = {worldRect->vector.x, worldRect->vector.y + worldRect->size.height};
     size_t upperLeftGridIndex = worldPositionToGridIndex(self, &upperLeft);
 
     target[0] = lowerLeftGridIndex;
@@ -145,7 +145,7 @@ findOverlaps(const Grid2dSlot *slot,
     }
 }
 
-void grid2dQueryIntersects(const Grid2d *self, bl_recti *query,
+void grid2dQueryIntersects(const Grid2d *self, BlRecti *query,
                            Grid2dNodeResult *results)
 {
     size_t indexes[4];
@@ -173,7 +173,7 @@ static inline GRID_2D_FORCE_INLINE Grid2dSlotEntry *grid2dAllocateSlotEntry(Grid
     return slotEntry;
 }
 
-void grid2dAdd(Grid2d *self, const bl_recti *rect, void *userData)
+void grid2dAdd(Grid2d *self, const BlRecti *rect, void *userData)
 {
     size_t indexes[4];
     size_t foundIndexes = worldRectToGridIndexes(self, rect, indexes, 4);
